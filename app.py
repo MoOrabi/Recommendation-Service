@@ -17,12 +17,20 @@ app.config["JWT_HEADER_TYPE"] = "Bearer"
 jwt = JWTManager(app)
 
 
-@app.route('/hi', methods=['GET'])
+@app.route('/job-recommendation/<employer_type>', methods=['GET'])
 @jwt_required()
-def get_job_seeker_recommendations():
+def get_recommended_job_seekers(employer_type):
     user_id = get_jwt()['jti']
     print(user_id)
-    return (recommendationSer.get_recommended_job_seekers('80779a5a-e21d-4efb-b2d9-9ea9526fe822')).to_json(orient="records")
+    return recommendationSer.get_recommended_job_seekers_for_employer(user_id, employer_type)
+
+
+@app.route('/job-seekers-recommendation/<job_seeker_id>', methods=['GET'])
+@jwt_required()
+def get_recommended_job_posts(job_seeker_id):
+    user_id = get_jwt()['jti']
+    print(user_id)
+    return recommendationSer.get_job_recommendations(user_id)
 
 
 if __name__ == "__main__":
