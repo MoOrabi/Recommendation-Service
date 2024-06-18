@@ -9,6 +9,7 @@ from sqlalchemy import text
 from models.db import (get_job_seekers, get_job_posts, get_job_seekers_ready_to_json, job_post_df_ready_to_json,
                        get_job_posts_for_company, get_job_posts_for_recruiter, session, DeserializeHelper, convert_uuid_binary_to_str)
 from models.JobSeekerJobPostScore import JobSeekerJobPostScore
+from models.JobSeekerCumScoreTemp import JobSeekerJobCumScoreTemp
 import pandas as pd
 
 apis = Blueprint('apis', __name__)
@@ -86,8 +87,9 @@ def get_recommended_job_seekers(job_seekers_ids, page_number, page_size):
     page_number = int(page_number)
     page_size = int(page_size)
     query = (" js.id , first_name, last_name, job_title, career_level, profile_photo, skills, "
-             "degree, institution, place , je1.name "
-             "from job_seeker js left join education edu1 on edu1.job_seeker_id = js.id "
+             "degree, field_of_study, place , je1.name, start_year, end_year, cumulative_score "
+             "from job_seeker js join job_seeker_cum_score_temp tmp on tmp.id = js.id "
+             "left join education edu1 on edu1.job_seeker_id = js.id "
              "left join job_experience je1 on je1.job_seeker_id = js.id "
              "where (edu1.id = "
              "(select id from education edu2 where job_seeker_id = js.id order by start desc limit 1) or "
@@ -97,7 +99,7 @@ def get_recommended_job_seekers(job_seekers_ids, page_number, page_size):
              "order by start_year desc limit 1) or "
              "(select id from job_experience je2 where je2.job_seeker_id = js.id "
              "order by start_year desc limit 1) is null) " +
-             " and js.id in (" + ''.join(job_seekers_ids)[:-2] + ") " +
+             " and js.id in (" + ''.join(job_seekers_ids)[:-2] + ") order by cumulative_score desc" +
              " limit " + str(page_size) + " offset " + str((page_number-1)*page_size))
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
     print(len(df['id']))
@@ -122,8 +124,15 @@ def get_recommended_job_seekers_ids_with_cum_score(job_post_ids):
             cumulative_job_seekers_scores[df['job_seeker_id'][i]] = df['score'][i]
         else:
             cumulative_job_seekers_scores[df['job_seeker_id'][i]] += int(df['score'][i])
+    session.query(JobSeekerJobCumScoreTemp).delete()
+    for x in cumulative_job_seekers_scores.keys():
+        score = JobSeekerJobCumScoreTemp(id=uuid.UUID(x).bytes,
+                                         cumulative_score=cumulative_job_seekers_scores[x])
+        session.add(score)
+    session.commit()
     job_seekers_ids_with_score = sorted(cumulative_job_seekers_scores.items(), key=lambda x: x[1], reverse=True)
     job_seekers_ids = ["UUID_TO_BIN('"+str(row[0])+"'), " for row in job_seekers_ids_with_score]
+
     print(''.join(job_seekers_ids))
     return ''.join(job_seekers_ids)
 
@@ -140,8 +149,8 @@ def get_recommended_job_seekers_for_employer(employer_id, employer_type, page_nu
     return detailed_recommendations
 
 
-print("Job Seekers", get_recommended_job_seekers_for_employer('50258f51-9eea-4a92-90c5-8bfd7bae6fd3', "ROLE_COMPANY", 1,
-                                                              5))
+# print("Job Seekers", get_recommended_job_seekers_for_employer('50258f51-9eea-4a92-90c5-8bfd7bae6fd3', "ROLE_COMPANY", 1,
+#                                                               5))
 
 # print(get_job_recommendations('8d4fd53e-05e1-4be4-91f6-b1db66748f04', 1, 5).to_json(orient="records"))
 
