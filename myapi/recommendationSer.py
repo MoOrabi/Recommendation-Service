@@ -71,9 +71,10 @@ def train_and_store():
     # print(similarity_details)
 
 
-def get_job_recommendations(job_seeker_id):
+def get_job_recommendations(job_seeker_id, page_number, page_size):
     query = (" * from job_post jp join job_seeker_job_post_score sc on jp.id = sc.job_post_id"
-             " where sc.job_seeker_id = UUID_TO_BIN('") + job_seeker_id + "') order by sc.score desc"
+             " where sc.job_seeker_id = UUID_TO_BIN('" + job_seeker_id + "') order by sc.score desc"
+             " limit " + str(page_size) + " offset " + str((page_number - 1) * page_size))
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
     df = job_post_df_ready_to_json(df)
     df['job_seeker_id'] = df['job_seeker_id'].apply(convert_uuid_binary_to_str)
@@ -81,30 +82,69 @@ def get_job_recommendations(job_seeker_id):
     return df
 
 
-def get_recommended_job_seekers(job_post_ids):
-    job_post_ids = ["UUID_TO_BIN('"+str(uuid.UUID(bytes=row))+"'), " for row in job_post_ids]
-    query = (" * from job_seeker js join job_seeker_job_post_score sc on js.id = sc.job_seeker_id"
-             " where sc.job_post_id in (") + ''.join(job_post_ids)[:-2] + ") order by sc.score desc"
-    print("Hi", ''.join(job_post_ids))
+def get_recommended_job_seekers(job_seekers_ids, page_number, page_size):
+    page_number = int(page_number)
+    page_size = int(page_size)
+    query = (" js.id , first_name, last_name, job_title, career_level, profile_photo, skills, "
+             "degree, institution, place , je1.name "
+             "from job_seeker js left join education edu1 on edu1.job_seeker_id = js.id "
+             "left join job_experience je1 on je1.job_seeker_id = js.id "
+             "where (edu1.id = "
+             "(select id from education edu2 where job_seeker_id = js.id order by start desc limit 1) or "
+             "(select id from education edu2 where job_seeker_id = js.id order by start desc limit 1) is null) "
+             "and (je1.id = "
+             "(select id from job_experience je2 where je2.job_seeker_id = js.id "
+             "order by start_year desc limit 1) or "
+             "(select id from job_experience je2 where je2.job_seeker_id = js.id "
+             "order by start_year desc limit 1) is null) " +
+             " and js.id in (" + ''.join(job_seekers_ids)[:-2] + ") " +
+             " limit " + str(page_size) + " offset " + str((page_number-1)*page_size))
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
-
-    df = get_job_seekers_ready_to_json(df)
-    df['job_seeker_id'] = convert_uuid_binary_to_str(df['job_seeker_id'])
-    df['job_post_id'] = convert_uuid_binary_to_str(df['job_post_id'])
+    print(len(df['id']))
+    df['id'] = df['id'].apply(convert_uuid_binary_to_str)
+    for i in range(len(df['skills'])):
+        if df['skills'][i] is not None:
+            df['skills'][i] = DeserializeHelper.deserialize(df['skills'][i])
     return df
 
 
-def get_recommended_job_seekers_for_employer(employer_id, employer_type):
+def get_recommended_job_seekers_ids_with_cum_score(job_post_ids):
+    job_post_ids = ["UUID_TO_BIN('"+str(uuid.UUID(bytes=row))+"'), " for row in job_post_ids]
+    cumulative_job_seekers_scores = {}
+    query = (" * from job_seeker_job_post_score sc " +
+             " where sc.job_post_id in (" + ''.join(job_post_ids)[:-2] + ") ")
+    print("Hi", ''.join(job_post_ids))
+    df = pd.read_sql(session.query(text(query)).statement, session.bind)
+    df['job_seeker_id'] = df['job_seeker_id'].apply(convert_uuid_binary_to_str)
+    df['job_post_id'] = df['job_post_id'].apply(convert_uuid_binary_to_str)
+    for i in range(len(df['job_seeker_id'])):
+        if df['job_seeker_id'][i] not in cumulative_job_seekers_scores:
+            cumulative_job_seekers_scores[df['job_seeker_id'][i]] = df['score'][i]
+        else:
+            cumulative_job_seekers_scores[df['job_seeker_id'][i]] += int(df['score'][i])
+    job_seekers_ids_with_score = sorted(cumulative_job_seekers_scores.items(), key=lambda x: x[1], reverse=True)
+    job_seekers_ids = ["UUID_TO_BIN('"+str(row[0])+"'), " for row in job_seekers_ids_with_score]
+    print(''.join(job_seekers_ids))
+    return ''.join(job_seekers_ids)
+
+
+def get_recommended_job_seekers_for_employer(employer_id, employer_type, page_number, page_size):
+    job_post_ids = None
     if employer_type == "ROLE_COMPANY":
         job_post_ids = get_job_posts_for_company(employer_id)
-        return get_recommended_job_seekers(job_post_ids).to_json(orient="records")
     elif employer_type == "ROLE_RECRUITER":
         job_post_ids = get_job_posts_for_recruiter(employer_id)
-        return get_recommended_job_seekers(job_post_ids).to_json(orient="records")
+    job_seekers_ids = get_recommended_job_seekers_ids_with_cum_score(job_post_ids)
+
+    detailed_recommendations = get_recommended_job_seekers(job_seekers_ids, page_number, page_size).to_json(orient="records")
+    return detailed_recommendations
 
 
-# print("Job Seekers", get_recommended_job_seekers_for_employer('50258f51-9eea-4a92-90c5-8bfd7bae6fd3', "ROLE_COMPANY"))
+print("Job Seekers", get_recommended_job_seekers_for_employer('50258f51-9eea-4a92-90c5-8bfd7bae6fd3', "ROLE_COMPANY", 1,
+                                                              5))
 
-# print(get_job_recommendations('8d4fd53e-05e1-4be4-91f6-b1db66748f04').to_json(orient="records"))
+# print(get_job_recommendations('8d4fd53e-05e1-4be4-91f6-b1db66748f04', 1, 5).to_json(orient="records"))
+
+
 
 # train_and_store()

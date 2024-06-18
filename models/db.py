@@ -22,6 +22,7 @@ session = Session()
 def convert_uuid_binary_to_str(uuid_binary):
     return str(uuid.UUID(bytes=uuid_binary))
 
+
 def get_job_posts():
     query = " * from job_post"
     df = pd.read_sql(session.query(text(query)).statement, session.bind)

@@ -1,12 +1,13 @@
 import base64
 
 from flask import Flask, request
+from flask_cors import CORS
 from models.db import get_job_seekers, get_job_posts
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, get_jwt
 from myapi import recommendationSer
 
 app = Flask(__name__)
-
+CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/hirexhire'
 
@@ -17,20 +18,21 @@ app.config["JWT_HEADER_TYPE"] = "Bearer"
 jwt = JWTManager(app)
 
 
-@app.route('/job-recommendation/<employer_type>', methods=['GET'])
+@app.route('/job-recommendation/<employer_type>/<page_number>/<page_size>', methods=['GET'])
 @jwt_required()
-def get_recommended_job_seekers(employer_type):
+def get_recommended_job_seekers(employer_type, page_number, page_size):
     user_id = get_jwt()['jti']
     print(user_id)
-    return recommendationSer.get_recommended_job_seekers_for_employer(user_id, employer_type)
+    return recommendationSer.get_recommended_job_seekers_for_employer(user_id, employer_type,
+                                                                      page_number, page_size)
 
 
-@app.route('/job-seekers-recommendation/<job_seeker_id>', methods=['GET'])
+@app.route('/job-seekers-recommendation/<page_number>/<page_size>', methods=['GET'])
 @jwt_required()
-def get_recommended_job_posts(job_seeker_id):
+def get_recommended_job_posts(page_number, page_size):
     user_id = get_jwt()['jti']
     print(user_id)
-    return recommendationSer.get_job_recommendations(user_id)
+    return recommendationSer.get_job_recommendations(user_id, page_number, page_size)
 
 
 if __name__ == "__main__":
