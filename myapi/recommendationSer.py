@@ -73,6 +73,8 @@ def train_and_store():
 
 
 def get_job_recommendations(job_seeker_id, page_number, page_size):
+    page_number = int(page_number)
+    page_size = int(page_size)
     query = (" * from job_post jp join job_seeker_job_post_score sc on jp.id = sc.job_post_id"
              " where sc.job_seeker_id = UUID_TO_BIN('" + job_seeker_id + "') order by sc.score desc"
              " limit " + str(page_size) + " offset " + str((page_number - 1) * page_size))
@@ -80,7 +82,7 @@ def get_job_recommendations(job_seeker_id, page_number, page_size):
     df = job_post_df_ready_to_json(df)
     df['job_seeker_id'] = df['job_seeker_id'].apply(convert_uuid_binary_to_str)
     df['job_post_id'] = df['job_post_id'].apply(convert_uuid_binary_to_str)
-    return df
+    return df.to_json(orient="records")
 
 
 def get_recommended_job_seekers(job_seekers_ids, page_number, page_size):
@@ -145,7 +147,8 @@ def get_recommended_job_seekers_for_employer(employer_id, employer_type, page_nu
         job_post_ids = get_job_posts_for_recruiter(employer_id)
     job_seekers_ids = get_recommended_job_seekers_ids_with_cum_score(job_post_ids)
 
-    detailed_recommendations = get_recommended_job_seekers(job_seekers_ids, page_number, page_size).to_json(orient="records")
+    detailed_recommendations = (get_recommended_job_seekers(job_seekers_ids, page_number, page_size)
+                                .to_json(orient="records"))
     return detailed_recommendations
 
 
