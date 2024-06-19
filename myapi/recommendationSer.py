@@ -75,13 +75,17 @@ def train_and_store():
 def get_job_recommendations(job_seeker_id, page_number, page_size):
     page_number = int(page_number)
     page_size = int(page_size)
-    query = (" * from job_post jp join job_seeker_job_post_score sc on jp.id = sc.job_post_id"
-             " where sc.job_seeker_id = UUID_TO_BIN('" + job_seeker_id + "') order by sc.score desc"
+    query = (" jp.id, job_title, min_experience_years, max_experience_years, c.name company_name, jn.name, "
+             "l.city, l.country, "
+             "c.logo, employment_type, job_type "
+             "from job_post jp join job_seeker_job_post_score sc on jp.id = sc.job_post_id"
+             " join company c on jp.company_id = c.id join location l on c.main_location_location = l.id"
+             " join job_name jn on jp.job_name_id = jn.id"
+             " where sc.job_seeker_id = UUID_TO_BIN('" + job_seeker_id + "') order by sc.score desc,"
+                                                                         " jn.name, c.name"
              " limit " + str(page_size) + " offset " + str((page_number - 1) * page_size))
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
-    df = job_post_df_ready_to_json(df)
-    df['job_seeker_id'] = df['job_seeker_id'].apply(convert_uuid_binary_to_str)
-    df['job_post_id'] = df['job_post_id'].apply(convert_uuid_binary_to_str)
+    df['id'] = df['id'].apply(convert_uuid_binary_to_str)
     return df.to_json(orient="records")
 
 
@@ -117,7 +121,6 @@ def store_recommended_job_seekers_ids_with_cum_score(job_post_ids):
     cumulative_job_seekers_scores = {}
     query = (" * from job_seeker_job_post_score sc " +
              " where sc.job_post_id in (" + ''.join(job_post_ids)[:-2] + ") ")
-    print("Hi", ''.join(job_post_ids))
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
     df['job_seeker_id'] = df['job_seeker_id'].apply(convert_uuid_binary_to_str)
     df['job_post_id'] = df['job_post_id'].apply(convert_uuid_binary_to_str)
@@ -132,7 +135,6 @@ def store_recommended_job_seekers_ids_with_cum_score(job_post_ids):
                                          cumulative_score=cumulative_job_seekers_scores[x])
         session.add(score)
     session.commit()
-
 
 
 def get_recommended_job_seekers_for_employer(employer_id, employer_type, page_number, page_size):

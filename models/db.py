@@ -51,11 +51,10 @@ def get_job_posts_for_company(company_id):
 
 
 def get_job_posts_for_recruiter(recruiter_id):
-    query = (" * from job_post jp join job_seeker_job_post_score sc on jp.id = sc.job_post_id "
-             "where UUID_TO_BIN('") + recruiter_id + "') in jp.recruiters_team"
+    query = (" distinct id from job_post jp join job_seeker_job_post_score sc on jp.id = sc.job_post_id "
+             "join recruiters_team rt on jp.id = rt.job_post_id "
+             "where UUID_TO_BIN('") + recruiter_id + "') = rt.recruiter_id"
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
-
-    df['id'] = df['id'].apply(convert_uuid_binary_to_str)
     return df['id']
 
 

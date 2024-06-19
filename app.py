@@ -22,7 +22,6 @@ jwt = JWTManager(app)
 @jwt_required()
 def get_recommended_job_seekers(employer_type, page_number, page_size):
     user_id = get_jwt()['jti']
-    print(user_id)
     return recommendationSer.get_recommended_job_seekers_for_employer(user_id, employer_type,
                                                                       page_number, page_size)
 
@@ -31,7 +30,6 @@ def get_recommended_job_seekers(employer_type, page_number, page_size):
 @jwt_required()
 def get_recommended_job_posts(page_number, page_size):
     user_id = get_jwt()['jti']
-    print(user_id)
     return recommendationSer.get_job_recommendations(user_id, page_number, page_size)
 
 
