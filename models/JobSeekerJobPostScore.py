@@ -1,7 +1,8 @@
 import uuid
-from sqlalchemy import create_engine, Column, Integer, String, Sequence, Float, BINARY
+
+from sqlalchemy import Column, Float, BINARY
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.dialects.postgresql import UUID
+
 
 class Base(DeclarativeBase):
     pass

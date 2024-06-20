@@ -1,9 +1,9 @@
 import base64
 
-from flask import Flask, request
+from flask import Flask
 from flask_cors import CORS
-from models.db import get_job_seekers, get_job_posts
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt
+
 from myapi import recommendationSer
 
 app = Flask(__name__)

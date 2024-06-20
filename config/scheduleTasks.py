@@ -1,5 +1,7 @@
-import schedule
 import time
+
+import schedule
+
 from myapi.recommendationSer import train_and_store
 
 # Define a flag to check if it's the first run

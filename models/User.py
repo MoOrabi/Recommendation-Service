@@ -1,11 +1,13 @@
-from app import app
-from sqlalchemy import Column, String, Boolean, Enum, DateTime, ForeignKey, Integer
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, declarative_base
-from sqlalchemy.sql import func
 import uuid
 from enum import Enum as PyEnum
+
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import String, Boolean, Enum, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.sql import func
+
+from app import app
 
 db = SQLAlchemy(app)
 

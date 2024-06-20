@@ -1,16 +1,16 @@
 import uuid
 
+import pandas as pd
 from flask import Blueprint
 from pandas import DataFrame
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy import text
 
-from models.db import (get_job_seekers, get_job_posts, get_job_seekers_ready_to_json, job_post_df_ready_to_json,
-                       get_job_posts_for_company, get_job_posts_for_recruiter, session, DeserializeHelper, convert_uuid_binary_to_str)
-from models.JobSeekerJobPostScore import JobSeekerJobPostScore
 from models.JobSeekerCumScoreTemp import JobSeekerJobCumScoreTemp
-import pandas as pd
+from models.JobSeekerJobPostScore import JobSeekerJobPostScore
+from models.db import (get_job_seekers, get_job_posts, get_job_posts_for_company, get_job_posts_for_recruiter, session,
+                       DeserializeHelper, convert_uuid_binary_to_str)
 
 apis = Blueprint('apis', __name__)
 
