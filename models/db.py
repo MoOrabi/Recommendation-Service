@@ -1,13 +1,10 @@
-import jnius_config
-jnius_config.set_classpath('F:\Graduation Project\Hiring-Process-Management-System-Backend\\target\classes')
-from jnius import autoclass
 from sqlalchemy import create_engine
 import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 import uuid
+import javaobj as javaobj
 
-DeserializeHelper = autoclass('com.application.common.helper.DeserializeHelper')
 
 user, password, host, database = 'root', 'root', 'localhost', 'hirexhire'
 engine = create_engine(url=f'mysql+pymysql://{user}:{password}@{host}/{database}?charset=utf8')
@@ -74,15 +71,15 @@ def get_job_seekers_ready_to_json(df):
     df['id'] = df['id'].apply(convert_uuid_binary_to_str)
     for i in range(len(df['jobs_user_interested_in'])):
         if df['jobs_user_interested_in'][i] is not None:
-            df['jobs_user_interested_in'][i] = DeserializeHelper.deserialize(df['jobs_user_interested_in'][i])
+            df['jobs_user_interested_in'][i] = javaobj.loads(df['jobs_user_interested_in'][i])
     for i in range(len(df['jobs_types_user_interested_in'])):
         if df['jobs_types_user_interested_in'][i] is not None:
-            df['jobs_types_user_interested_in'][i] = DeserializeHelper.deserialize(
+            df['jobs_types_user_interested_in'][i] = javaobj.loads(
                 df['jobs_types_user_interested_in'][i])
     for i in range(len(df['skills'])):
         if df['skills'][i] is not None:
-            df['skills'][i] = DeserializeHelper.deserialize(df['skills'][i])
+            df['skills'][i] = javaobj.loads(df['skills'][i])
     for i in range(len(df['work_samples'])):
         if df['work_samples'][i] is not None:
-            df['work_samples'][i] = DeserializeHelper.deserialize(df['work_samples'][i])
+            df['work_samples'][i] = javaobj.loads(df['work_samples'][i])
     return df

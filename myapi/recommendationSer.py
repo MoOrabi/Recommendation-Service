@@ -1,5 +1,6 @@
 import uuid
 
+import javaobj
 import pandas as pd
 from flask import Blueprint
 from pandas import DataFrame
@@ -10,7 +11,7 @@ from sqlalchemy import text
 from models.JobSeekerCumScoreTemp import JobSeekerJobCumScoreTemp
 from models.JobSeekerJobPostScore import JobSeekerJobPostScore
 from models.db import (get_job_seekers, get_job_posts, get_job_posts_for_company, get_job_posts_for_recruiter, session,
-                       DeserializeHelper, convert_uuid_binary_to_str)
+                       convert_uuid_binary_to_str)
 
 apis = Blueprint('apis', __name__)
 
@@ -112,7 +113,7 @@ def get_recommended_job_seekers(page_number, page_size):
     df['id'] = df['id'].apply(convert_uuid_binary_to_str)
     for i in range(len(df['skills'])):
         if df['skills'][i] is not None:
-            df['skills'][i] = DeserializeHelper.deserialize(df['skills'][i])
+            df['skills'][i] = javaobj.loads(df['skills'][i])
     return df
 
 
