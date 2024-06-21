@@ -5,6 +5,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt
 
 from myapi import recommendationSer
+from config import scheduleTasks
 
 app = Flask(__name__)
 CORS(app)

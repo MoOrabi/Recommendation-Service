@@ -17,7 +17,7 @@ def on_first_run():
 
 
 # Schedule the task to run at specific times
-schedule.every().day.at("09:00").do(train_and_store())  # Example: Run every day at 9 AM
+schedule.every().day.at("09:00").do(train_and_store)  # Example: Run every day at 9 AM
 
 # Main loop to check for scheduled tasks and first run
 while True:
