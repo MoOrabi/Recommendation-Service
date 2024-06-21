@@ -19,8 +19,9 @@ def on_first_run():
 # Schedule the task to run at specific times
 schedule.every().day.at("09:00").do(train_and_store)  # Example: Run every day at 9 AM
 
+
 # Main loop to check for scheduled tasks and first run
-while True:
+def run_schedule():
     on_first_run()  # Check if it's the first run
     schedule.run_pending()  # Run any pending scheduled tasks
     time.sleep(1)  # Sleep for a second before checking again

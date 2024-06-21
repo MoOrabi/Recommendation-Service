@@ -1,4 +1,5 @@
 import base64
+from threading import Thread
 
 from flask import Flask
 from flask_cors import CORS
@@ -35,6 +36,9 @@ def get_recommended_job_posts(page_number, page_size):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    t = Thread(target=scheduleTasks.run_schedule())
+    t.start()
+
+    app.run(debug=True, use_reloader=False)
 
 
