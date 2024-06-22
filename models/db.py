@@ -52,6 +52,7 @@ def get_job_posts_for_recruiter(recruiter_id):
              "join recruiters_team rt on jp.id = rt.job_post_id "
              "where UUID_TO_BIN('") + recruiter_id + "') = rt.recruiter_id"
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
+    print("df", df['id'], "df", sep='')
     return df['id']
 
 

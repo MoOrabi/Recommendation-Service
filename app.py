@@ -39,6 +39,6 @@ if __name__ == "__main__":
     t = Thread(target=scheduleTasks.run_schedule())
     t.start()
 
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True)
 
 

@@ -109,7 +109,6 @@ def get_recommended_job_seekers(page_number, page_size):
              "order by cumulative_score desc, first_name asc, last_name asc" +
              " limit " + str(page_size) + " offset " + str((page_number-1)*page_size))
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
-    print(len(df['id']))
     df['id'] = df['id'].apply(convert_uuid_binary_to_str)
     for i in range(len(df['skills'])):
         if df['skills'][i] is not None:
@@ -144,7 +143,10 @@ def get_recommended_job_seekers_for_employer(employer_id, employer_type, page_nu
         job_post_ids = get_job_posts_for_company(employer_id)
     elif employer_type == "ROLE_RECRUITER":
         job_post_ids = get_job_posts_for_recruiter(employer_id)
-    store_recommended_job_seekers_ids_with_cum_score(job_post_ids)
+    if len(job_post_ids) != 0:
+        store_recommended_job_seekers_ids_with_cum_score(job_post_ids)
+    else:
+        return []
 
     detailed_recommendations = (get_recommended_job_seekers(page_number, page_size)
                                 .to_json(orient="records"))
