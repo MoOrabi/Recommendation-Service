@@ -23,11 +23,9 @@ def convert_uuid_binary_to_str(uuid_binary):
 def get_job_posts():
     query = " * from job_post"
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
-
+    if len(df.values) == 0:
+        return []
     df = job_post_df_ready_to_json(df)
-
-    # job_posts = df.to_json(orient='records', force_ascii=False)
-    # print(job_posts)
 
     return df
 
@@ -52,18 +50,15 @@ def get_job_posts_for_recruiter(recruiter_id):
              "join recruiters_team rt on jp.id = rt.job_post_id "
              "where UUID_TO_BIN('") + recruiter_id + "') = rt.recruiter_id"
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
-    print("df", df['id'], "df", sep='')
     return df['id']
 
 
 def get_job_seekers():
     query = " * from job_seeker"
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
-
+    if len(df.values) == 0:
+        return []
     df = get_job_seekers_ready_to_json(df)
-
-    # job_seekers = df.to_json(orient='records', force_ascii=False)
-    # print(job_seekers)
 
     return df
 

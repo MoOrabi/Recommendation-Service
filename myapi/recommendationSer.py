@@ -45,6 +45,8 @@ cosine_sim = None
 
 def train_and_store():
     similarity_details = []
+    if len(job_posts_df) == 0 or len(job_seekers_df) == 0:
+        return []
     job_posts_df['combined'] = job_posts_df.apply(combine_job_post_fields, axis=1)
     job_seekers_df['combined'] = job_seekers_df.apply(combine_job_seeker_fields, axis=1)
 
@@ -70,14 +72,15 @@ def train_and_store():
                                          score=row[2])
         session.add(instance)
     session.commit()
-    # print(similarity_details)
 
 
 def get_job_recommendations(job_seeker_id, page_number, page_size):
     page_number = int(page_number)
     page_size = int(page_size)
     query = (" jp.id, job_title, min_experience_years, max_experience_years, c.name company_name, jn.name, "
-             "l.city, l.country, "
+             "l.city, l.country, exists(select * from jobseeker_saved_jobs where job_seeker_id = "
+             "UUID_TO_BIN('" + job_seeker_id + "') and job_post_id = jp.id ) saved, "
+             "(select GROUP_CONCAT(skill) from required_skills where employee_id = jp.id) skills, "
              "c.logo, employment_type, job_type "
              "from job_post jp join job_seeker_job_post_score sc on jp.id = sc.job_post_id"
              " join company c on jp.company_id = c.id join location l on c.main_location_location = l.id"
