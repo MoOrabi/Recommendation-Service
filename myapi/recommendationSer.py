@@ -21,8 +21,6 @@ job_seekers_df: DataFrame = get_job_seekers()
 
 def combine_job_post_fields(row):
     return ((str(row['job_title']) if row['job_title'] else '') + ' ' +
-            (str(row['job_title']) if row['job_title'] else '') + ' ' +
-            (str(row['job_title']) if row['job_title'] else '') + ' ' +
             (str(row['min_experience_years']) if row['min_experience_years'] else '') + ' ' +
             (str(row['max_experience_years']) if row['max_experience_years'] else '') + ' ' +
             (str(row['requirements']) if row['requirements'] else '') + ' ' +
@@ -33,7 +31,6 @@ def combine_job_seeker_fields(row):
     return ((str(row['job_title']) if row['job_title'] else '') + ' ' +
             (str(row['career_level']) if row['career_level'] else '') + ' ' +
             (str(row['jobs_user_interested_in']) if row['jobs_user_interested_in'] else '') + ' ' +
-            (str(row['years_of_experience']) if row['years_of_experience'] else '') + ' ' +
             (str(row['years_of_experience']) if row['years_of_experience'] else '') + ' ' +
             (str(row['skills']) if row['skills'] else '') + ' ' +
             (str(row['jobs_types_user_interested_in']) if row['jobs_types_user_interested_in'] else '') + ' '
@@ -109,7 +106,7 @@ def get_recommended_job_seekers(page_number, page_size):
              "order by start_year desc limit 1) or "
              "(select id from job_experience je2 where je2.job_seeker_id = js.id "
              "order by start_year desc limit 1) is null) " +
-             "order by cumulative_score desc, first_name asc, last_name asc" +
+             "order by cumulative_score desc, js.complete desc, first_name asc, last_name asc" +
              " limit " + str(page_size) + " offset " + str((page_number-1)*page_size))
     df = pd.read_sql(session.query(text(query)).statement, session.bind)
     df['id'] = df['id'].apply(convert_uuid_binary_to_str)
